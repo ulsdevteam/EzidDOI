@@ -22,6 +22,7 @@ import('lib.pkp.classes.webservice.WebService');
 
 // EZID API
 define('EZID_API_RESPONSE_CREATED', 201);
+define('EZID_API_RESPONSE_OK', 200);
 define('EZID_API_MINT_URL', 'https://ezid.cdlib.org/shoulder/doi:');
 define('EZID_API_MODIFY_URL', 'https://ezid.cdlib.org/id/doi:');
 
@@ -316,10 +317,14 @@ class EzidRegisterPlugin extends DOIExportPlugin {
       $input .= "datacite.publisher: " . $journal->getSetting('publisherInstitution') . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
       $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;  
-      if ($object->getData('ezid::registeredDoi'))
+      if ($object->getData('ezid::registeredDoi')) {
         $webServiceRequest = new WebServiceRequest(EZID_API_MODIFY_URL . $object->getStoredPubId('doi'), $input, 'POST');
-      else
+        $expectedResponse = EZID_API_RESPONSE_OK;
+      }
+      else {
         $webServiceRequest = new WebServiceRequest(EZID_API_MINT_URL . $shoulder, $input, 'POST');
+        $expectedResponse = EZID_API_RESPONSE_CREATED;
+      }
       $webServiceRequest->setHeader('Content-Type', 'text/plain; charset=UTF-8');
       $webServiceRequest->setHeader('Content-Length', strlen($input));
   
@@ -335,7 +340,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
         $result = array(array('plugins.importexport.common.register.error.mdsError', 'No response from server.'));
       } else {
         $status = $webService->getLastResponseStatus();
-        if ($status != EZID_API_RESPONSE_CREATED) {
+        if ($status != $expectedResponse) {
           $result = array(array('plugins.importexport.common.register.error.mdsError', "$status - $response"));
         }
       }
