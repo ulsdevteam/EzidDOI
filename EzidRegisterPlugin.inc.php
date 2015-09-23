@@ -24,7 +24,7 @@ import('lib.pkp.classes.webservice.WebService');
 define('EZID_API_RESPONSE_CREATED', 201);
 define('EZID_API_RESPONSE_OK', 200);
 define('EZID_API_MINT_URL', 'https://ezid.cdlib.org/shoulder/doi:');
-define('EZID_API_MODIFY_URL', 'https://ezid.cdlib.org/id/doi:');
+define('EZID_API_CRUD_URL', 'https://ezid.cdlib.org/id/doi:');
 
 class EzidRegisterPlugin extends DOIExportPlugin {
 
@@ -318,10 +318,9 @@ class EzidRegisterPlugin extends DOIExportPlugin {
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
       $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;  
       if ($object->getData('ezid::registeredDoi')) {
-        $webServiceRequest = new WebServiceRequest(EZID_API_MODIFY_URL . $object->getStoredPubId('doi'), $input, 'POST');
+        $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getData('ezid::registeredDoi'), $input, 'POST');
         $expectedResponse = EZID_API_RESPONSE_OK;
-      }
-      else {
+      } else {
         $webServiceRequest = new WebServiceRequest(EZID_API_MINT_URL . $shoulder, $input, 'POST');
         $expectedResponse = EZID_API_RESPONSE_CREATED;
       }

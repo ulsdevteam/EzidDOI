@@ -21,7 +21,7 @@
   <message key="plugins.importexport.ezid.error.publisherNotConfigured"><![CDATA[A journal publisher has not been configured! You must add a publisher institution under <a href="{$publisherUrl}" target="_blank">Journal Setup Step 1.5</a>.]]></message>
   <message key="plugins.importexport.ezid.error.issnNotConfigured"><![CDATA[Journal Online ISSN has not been configured! You must apply one and add it under <a href="{$issnUrl}" target="_blank">Journal Setup Step 1.1</a>.]]></message>
   <message key="plugins.importexport.ezid.settings.depositorIntro">The following items are required for a successful ezid deposit.</message>
-  
+  <message key="plugins.importexport.ezid.doiMismatch">The registered DOI does not match the current article DOI of {$storedDoi}.</message>
 
   
   <message key="plugins.importexport.ezid.settings.form.automaticRegistration">Register DOIs automatically</message>
