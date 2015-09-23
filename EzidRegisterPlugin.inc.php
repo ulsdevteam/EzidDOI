@@ -299,7 +299,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     // we only consider articles and issues here
     $result = true;
 
-    if (is_a($object, 'PublishedArticle') || is_a($object, 'Issue') ) {      
+    if (is_a($object, 'PublishedArticle') || is_a($object, 'Issue') ) {
       
       $input = "_profile: crossref" . PHP_EOL;
       $input .= "crossref: " . $this->_doiMetadataEscape($payload) . PHP_EOL;
@@ -336,11 +336,13 @@ class EzidRegisterPlugin extends DOIExportPlugin {
 
       
       if ($response === false) {
-        $result = array(array('plugins.importexport.common.register.error.mdsError', 'No response from server.'));
+        $result = array(array('plugins.importexport.common.register.error.mdsError', __('plugins.importexport.ezid.error.webserviceNoResponse')));
+      } else if ($response === NULL) {
+        $result = array(array('plugins.importexport.ezid.error.webserviceInvalidRequest'));
       } else {
         $status = $webService->getLastResponseStatus();
         if ($status != $expectedResponse) {
-          $result = array(array('plugins.importexport.common.register.error.mdsError', "$status - $response"));
+          $result = array(array('plugins.importexport.common.register.error.mdsError', "$status - ".htmlentities($response)));
         }
       }
     } else {
@@ -362,7 +364,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
         $object->setStoredPubId('doi', $doi);
       } 
       // Mark the object as registered.
-      $this->markRegistered($request, $object, $shoulder);        
+      $this->markRegistered($request, $object, $shoulder);
     }
 
     return $result;
