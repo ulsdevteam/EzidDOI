@@ -233,7 +233,6 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     
     // Run through the export types and generate the corresponding
     // export files.
-    $exportFiles = array();
     foreach($exportSpec as $exportType => $objectIds) {
       // Normalize the object id(s) into an array.
       if (is_scalar($objectIds)) $objectIds = array($objectIds);
@@ -241,7 +240,6 @@ class EzidRegisterPlugin extends DOIExportPlugin {
       // Retrieve the object(s).
       $objects =& $this->_getObjectsFromIds($exportType, $objectIds, $journal->getId(), $errors);
       if (empty($objects)) {
-        $this->cleanTmpfiles($exportPath, $exportFiles);
         return errors;
       }
       $result = $this->processRegisterObjects($request, $exportType, $objects, $exportPath, $journal, $errors);
@@ -265,6 +263,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     foreach($objects as $object) {
       // Write the result to the target file.
       $exportFileName = $this->getTargetFileName($exportPath, $exportType, $object->getId());
+      array_push($exportFiles, $exportFileName);
 
       $dom = new EzidExportDom($request, $this, $journal, $this->getCache());
       $object_array = array();
