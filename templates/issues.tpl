@@ -97,8 +97,6 @@
         <input type="submit" name="register" value="{translate key="plugins.importexport.common.register"}" title="{translate key="plugins.importexport.common.registerDescription.multi"}" class="button defaultButton"/>
         &nbsp;
       {/if}
-      <input type="submit" name="export" value="{translate key="common.export"}" title="{translate key="plugins.importexport.common.exportDescription"}" class="button{if !$hasCredentials}  defaultButton{/if}"/>
-      &nbsp;
       <input type="button" value="{translate key="common.selectAll"}" class="button" onclick="toggleChecked()" />
     </p>
     <p>
