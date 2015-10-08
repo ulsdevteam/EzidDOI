@@ -352,8 +352,14 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     if ($result === true) {
       # trim off "success: doi:"
       $trimmed_body = preg_replace('/(success: doi:)/', '', $response);
-      list($doi, $ark) = explode(' ', $trimmed_body, 2);
-      
+      if (strstr($trimmed_body, ' | ark:') !== FALSE) {
+        list($doi, $ark) = explode(' | ark:', $trimmed_body, 2);
+        $ark = 'ark:'.$ark;
+      } else {
+        $doi = $trimmed_body;
+        $ark = '';
+      }
+
       if (is_a($object, 'Issue')) {
         $dao =& DAORegistry::getDAO('IssueDAO');
         $dao->changePubId($object->getId(), 'doi', $doi);
