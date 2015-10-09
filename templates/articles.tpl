@@ -69,7 +69,7 @@
           <td align="center">
             {if $article->getData('ezid::registeredDoi')}
               <a href="http://dx.doi.org/{$article->getData('ezid::registeredDoi')|escape}" target="_blank">doi:{$article->getData('ezid::registeredDoi')|escape}</a>
-              {if $article->getData('ezid::registeredDoi') != $article->getStoredPubId('doi')}
+              {if strtoupper($article->getData('ezid::registeredDoi')) != strtoupper($article->getStoredPubId('doi'))}
                 {translate key="plugins.importexport.ezid.doiMismatch" storedDoi=$article->getStoredPubId('doi')}
               {/if}
             {else}
