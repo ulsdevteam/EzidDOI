@@ -362,13 +362,14 @@ class EzidRegisterPlugin extends DOIExportPlugin {
 
       if (is_a($object, 'Issue')) {
         $dao =& DAORegistry::getDAO('IssueDAO');
-        $dao->changePubId($object->getId(), 'doi', $doi);
-        $object->setStoredPubId('doi', $doi);
       } elseif (is_a($object, 'Article')) {
         $dao =& DAORegistry::getDAO('ArticleDAO');
-        $dao->changePubId($object->getId(), 'doi', $doi);
-        $object->setStoredPubId('doi', $doi);
       } 
+      $dao->changePubId($object->getId(), 'doi', $doi);
+      // Update the stored pub id if the change is not just text case
+      if (strtoupper($object->getStoredPubId('doi')) !== $doi) {
+        $object->setStoredPubId('doi', $doi);
+      }
       // Mark the object as registered.
       $this->markRegistered($request, $object, $shoulder);
     }
