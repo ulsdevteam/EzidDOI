@@ -365,6 +365,15 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
   }
 
   /**
+   * For now, the crontab is disabled
+   * TODO: add scheduledTasks.xml, remove this method override
+   * @see AcronPlugin::parseCronTab()
+   */
+  function callbackParseCronTab($hookName, $args) {
+    return false;
+  }
+
+  /**
    * Display a list of issues for export.
    * N.b.: this method should probably be removed when https://github.com/pkp/pkp-lib/issues/808 is resolved (OJS 2.4.8),
    *  assuming CrossRefExportPlugin::displayIssueList() continues to accomodate the workflow.
