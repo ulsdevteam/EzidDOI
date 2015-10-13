@@ -40,7 +40,7 @@
   <message key="plugins.importexport.ezid.settings.form.userNameRequired">Please enter the username you got from EZID.</message>
   <message key="plugins.importexport.ezid.settings.form.userPasswordRequired">Please enter the password you got from EZID.</message>
   <message key="plugins.importexport.ezid.settings.form.shoulder">DOI Shoulder</message>
-  <message key="plugins.importexport.ezid.settings.form.shoulder.description">Please enter the DOI shoulder you got from EZID (10.5072/FK2 for test purpose) and in the format 10.xxxx/xxx.</message>
+  <message key="plugins.importexport.ezid.settings.form.shoulder.description">If you wish to mint new randomly generated DOIs based on an EZID shoulder, please enter the DOI shoulder you got from EZID in the format 10.xxxx/xxx.  This will override the DOI Prefix and DOI Suffix settings in the DOI PubId plugin.  The shoulder 10.5072/FK2 can be used for test purposes.</message>
   <message key="plugins.importexport.ezid.export.unregistered">Unregistered Articles</message>
   <message key="plugins.importexport.ezid.export.selectUnregistered">Select unregistered Articles</message>
   <message key="plugins.importexport.ezid.export.noUnregistered">All published articles have already been registered (or none of them has a DOI assigned).</message>
