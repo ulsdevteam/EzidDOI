@@ -14,8 +14,8 @@
  */
 
 
-if (!class_exists('DOIExportPlugin')) { // Bug #7848
-  import('plugins.importexport.crossref.classes.DOIExportPlugin');
+if (!class_exists('CrossRefExportPlugin')) { // Bug #7848
+  import('plugins.importexport.crossref.CrossRefExportPlugin');
 }
 
 import('lib.pkp.classes.webservice.WebService');
@@ -26,16 +26,23 @@ define('EZID_API_RESPONSE_OK', 200);
 define('EZID_API_MINT_URL', 'https://ezid.cdlib.org/shoulder/doi:');
 define('EZID_API_CRUD_URL', 'https://ezid.cdlib.org/id/doi:');
 
-class EzidRegisterPlugin extends DOIExportPlugin {
+class EzidRegisterPlugin extends CrossRefExportPlugin {
 
   //
   // Constructor
   //
   function EzidRegisterPlugin() {
-    parent::DOIExportPlugin();
+    parent::CrossRefExportPlugin();
   }
 
-
+  /**
+   * Skip the Crossref register() method
+   * @see PKPPlugin::register()
+   */
+  function register($category, $path) {
+    $success = DOIExportPlugin::register($category, $path);
+    return $success;
+  }
   //
   // Implement template methods from ImportExportPlugin
   //
@@ -78,63 +85,6 @@ class EzidRegisterPlugin extends DOIExportPlugin {
   }
 
   /**
-   * @see DOIExportPlugin::getAllObjectTypes()
-   */
-  function getAllObjectTypes() {
-    return array(
-      'issue' => DOI_EXPORT_ISSUES,
-      'article' => DOI_EXPORT_ARTICLES
-    );
-  }
-
-  /**
-   * Display a list of issues for export.
-   * @param $templateMgr TemplateManager
-   * @param $journal Journal
-   */
-  function displayIssueList(&$templateMgr, &$journal) {
-    $this->setBreadcrumbs(array(), true);
-
-    // Retrieve all published issues.
-    AppLocale::requireComponents(array(LOCALE_COMPONENT_OJS_EDITOR));
-    $issueDao =& DAORegistry::getDAO('IssueDAO'); /* @var $issueDao IssueDAO */
-    $this->registerDaoHook('IssueDAO');
-    $issueIterator =& $issueDao->getPublishedIssues($journal->getId(), Handler::getRangeInfo('issues'));
-
-    // Filter only issues that contain an article that have a DOI assigned.
-    $publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
-    $issues = array();
-    $numArticles = array();
-    while ($issue =& $issueIterator->next()) {
-      $issueArticles =& $publishedArticleDao->getPublishedArticles($issue->getId());
-      $issueArticlesNo = 0;
-      $allArticlesRegistered = true;
-      foreach ($issueArticles as $issueArticle) {
-        $articleRegistered = $issueArticle->getData('crossref::registeredDoi');
-        if ($issueArticle->getPubId('doi') && !isset($articleRegistered)) {
-          if (!in_array($issue, $issues)) $issues[] = $issue;
-          $issueArticlesNo++;
-        }
-        if ($allArticlesRegistered && !isset($articleRegistered)) {
-          $allArticlesRegistered = false;
-        }
-      }
-      $numArticles[$issue->getId()] = $issueArticlesNo;
-    }
-
-    // Instantiate issue iterator.
-    import('lib.pkp.classes.core.ArrayItemIterator');
-    $rangeInfo = Handler::getRangeInfo('articles');
-    $iterator = new ArrayItemIterator($issues, $rangeInfo->getPage(), $rangeInfo->getCount());
-
-    // Prepare and display the issue template.
-    $templateMgr->assign_by_ref('issues', $iterator);
-    $templateMgr->assign('numArticles', $numArticles);
-    $templateMgr->assign('allArticlesRegistered', $allArticlesRegistered);
-    $templateMgr->display($this->getTemplatePath() . 'issues.tpl');
-  }
-
-  /**
    * @see DOIExportPlugin::displayAllUnregisteredObjects()
    */
   function displayAllUnregisteredObjects(&$templateMgr, &$journal) {
@@ -145,46 +95,6 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     // Prepare and display the template.
     $templateMgr->assign_by_ref('articles', $this->_getUnregisteredArticles($journal));
     $templateMgr->display($this->getTemplatePath() . 'unregisteredArticles.tpl');
-  }
-
-  /**
-   * @copydoc DOIExportPlugin::displayArticleList
-   */
-  function displayArticleList(&$templateMgr, &$journal) {
-    return parent::displayArticleList($templateMgr, $journal);
-  }
-
-  /**
-   * The selected issue can be exported if it contains an article that has a DOI,
-   * and the articles containing a DOI also have a date published.
-   * The selected article can be exported if it has a DOI and a date published.
-   * @param $foundObject Issue|PublishedArticle
-   * @param $errors array
-   * @return array|boolean
-  */
-  function canBeExported($foundObject, &$errors) {
-    if (is_a($foundObject, 'Issue')) {
-      $export = false;
-      $publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
-      $issueArticles =& $publishedArticleDao->getPublishedArticles($foundObject->getId());
-      foreach ($issueArticles as $issueArticle) {
-        if (!is_null($issueArticle->getPubId('doi'))) {
-          $export = true;
-          if (is_null($issueArticle->getDatePublished())) {
-            $errors[] = array('plugins.importexport.crossref.export.error.articleDatePublishedMissing', $issueArticle->getId());
-            return false;
-          }
-        }
-      }
-      return $export;
-    }
-    if (is_a($foundObject, 'PublishedArticle')) {
-      if (is_null($foundObject->getDatePublished())) {
-        $errors[] = array('plugins.importexport.crossref.export.error.articleDatePublishedMissing', $foundObject->getId());
-        return false;
-      }
-      return parent::canBeExported($foundObject, $errors);
-    }
   }
 
   /**
@@ -230,7 +140,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     // Run through the export spec and generate XML files and register dois for the corresponding
     // objects.
     $errors = array();
-    
+
     // Run through the export types and generate the corresponding
     // export files.
     $exportFiles = array();
@@ -247,7 +157,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
       $result = $this->processRegisterObjects($request, $exportType, $objects, $exportPath, $journal, $errors);
       if ($result !== true) {
         return $result;
-      }  
+      }
     }
     return true;
   }
@@ -256,13 +166,37 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     // Run through the export types and generate the corresponding
     // export files.
     $exportFiles = array();
-    
+
     // Export the object(s) to file(s).
     // Additional locale file.
     AppLocale::requireComponents(array(LOCALE_COMPONENT_OJS_EDITOR));
 
     $this->import('classes.EzidExportDom');
     foreach($objects as $object) {
+      // Issues will pre-process articles within the issue
+      if (is_a($object, 'Issue')) {
+        // Fetch the articles
+        $publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
+        $issueArticles =& $publishedArticleDao->getPublishedArticles($object->getId());
+        $articles = array();
+        // Extract the article IDs
+        foreach ($issueArticles as $issueArticle) {
+          if ($issueArticle->getPubId('doi')) {
+            array_push($articles, $issueArticle->getId());
+          }
+        }
+        // Package these articles as objects
+        $articleObjects =& $this->_getObjectsFromIds(DOI_EXPORT_ARTICLES, $articles, $journal->getId(), $errors);
+        if (empty($articleObjects)) {
+          return $errors;
+        }
+        // Call this same function for the articles
+        $articleResult = $this->processRegisterObjects($request, DOI_EXPORT_ARTICLES, $articleObjects, $exportPath, $journal, $errors);
+        if ($articleResult !== true) {
+          // If an error occurred, don't finish processing the Issue registration
+          return $articleResult;
+        }
+      }
       // Write the result to the target file.
       $exportFileName = $this->getTargetFileName($exportPath, $exportType, $object->getId());
 
@@ -274,7 +208,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
         $errors =& $dom->getErrors();
         return $errors;
       }
-      
+
       file_put_contents($exportFileName, XMLCustomWriter::getXML($doc));
       $result = $this->registerDoi($request, $journal, $object, $exportFileName);
       if ($result !== true) {
@@ -300,10 +234,10 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     $result = true;
 
     if (is_a($object, 'PublishedArticle') || is_a($object, 'Issue') ) {
-      
+
       $input = "_profile: crossref" . PHP_EOL;
       $input .= "crossref: " . $this->_doiMetadataEscape($payload) . PHP_EOL;
-      
+
       // TODO: SHOW BOTH DATACITE METADATA AS WELL
       //5 required datacite fields:
       $input .= "datacite.creator: ";
@@ -311,22 +245,29 @@ class EzidRegisterPlugin extends DOIExportPlugin {
         foreach ($object->getAuthors() as $author) {
           $input .= $author->getLastName() . ", " . $author->getFirstName() . " " . $author->getMiddleName() . "; ";
         }
-      } 
+      }
       $input .= PHP_EOL;
       $input .= "datacite.title: " . $object->getLocalizedTitle() . PHP_EOL;
       $input .= "datacite.publisher: " . $journal->getSetting('publisherInstitution') . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
-      $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;  
+      $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;
       if ($object->getData('ezid::registeredDoi')) {
         $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getData('ezid::registeredDoi'), $input, 'POST');
         $expectedResponse = EZID_API_RESPONSE_OK;
       } else {
-        $webServiceRequest = new WebServiceRequest(EZID_API_MINT_URL . $shoulder, $input, 'POST');
-        $expectedResponse = EZID_API_RESPONSE_CREATED;
+        if ($shoulder){
+          $webServiceRequest = new WebServiceRequest(EZID_API_MINT_URL . $shoulder, $input, 'POST');
+          $expectedResponse = EZID_API_RESPONSE_CREATED;
+        }
+        else {
+          $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getPubId('doi'), $input, 'PUT');
+          $expectedResponse = EZID_API_RESPONSE_CREATED;
+        }
+
       }
       $webServiceRequest->setHeader('Content-Type', 'text/plain; charset=UTF-8');
       $webServiceRequest->setHeader('Content-Length', strlen($input));
-  
+
       $webService = new WebService();
       $username = $this->getSetting($journal->getId(), 'username');
       $password = $this->getSetting($journal->getId(), 'password');
@@ -334,7 +275,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
       $webService->setAuthPassword($password);
       $response =& $webService->call($webServiceRequest);
 
-      
+
       if ($response === false) {
         $result = array(array('plugins.importexport.common.register.error.mdsError', __('plugins.importexport.ezid.error.webserviceNoResponse')));
       } else if ($response === NULL) {
@@ -368,14 +309,14 @@ class EzidRegisterPlugin extends DOIExportPlugin {
         $dao =& DAORegistry::getDAO('ArticleDAO');
         $dao->changePubId($object->getId(), 'doi', $doi);
         $object->setStoredPubId('doi', $doi);
-      } 
+      }
       // Mark the object as registered.
       $this->markRegistered($request, $object, $shoulder);
     }
 
     return $result;
   }
-  
+
   //
   // Private helper methods
   //
@@ -391,7 +332,7 @@ class EzidRegisterPlugin extends DOIExportPlugin {
     $anvl_string = str_replace($search, $replace, $anvl_string);
     return $anvl_string;
   }
-  
+
   /**
    * @see DOIExportPlugin::processMarkRegistered()
    */
@@ -415,25 +356,70 @@ class EzidRegisterPlugin extends DOIExportPlugin {
   }
 
   /**
-   * Mark an object as "registered"
-   * by saving it's DOI to the object's
-   * "registeredDoi" setting.
-   * We prefix the setting with the plug-in's
-   * id so that we do not get name clashes
-   * when several DOI registration plug-ins
-   * are active at the same time.
-   * @parem $request Request
-   * @param $object Issue|PublishedArticle|ArticleGalley|SuppFile
-   * @parem $testPrefix string
+   * Assert that we don't have a "testMode"
+   * @param $request Request
+   * @return boolean
    */
-  function markRegistered(&$request, &$object, $testPrefix = '10.5072/FK2') {
-    $registeredDoi = $object->getPubId('doi');
-    assert(!empty($registeredDoi));
-    if ($this->isTestMode($request)) {
-      $registeredDoi = String::regexp_replace('#^[^/]+/#', $testPrefix, $registeredDoi);
-    }
-    $this->saveRegisteredDoi($object, $registeredDoi);
+  function isTestMode(&$request) {
+    return false;
   }
+
+  /**
+   * For now, the crontab is disabled
+   * TODO: add scheduledTasks.xml, remove this method override
+   * @see AcronPlugin::parseCronTab()
+   */
+  function callbackParseCronTab($hookName, $args) {
+    return false;
+  }
+
+  /**
+   * Display a list of issues for export.
+   * N.b.: this method should probably be removed when https://github.com/pkp/pkp-lib/issues/808 is resolved (OJS 2.4.8),
+   *  assuming CrossRefExportPlugin::displayIssueList() continues to accomodate the workflow.
+   * @param $templateMgr TemplateManager
+   * @param $journal Journal
+   */
+  function displayIssueList(&$templateMgr, &$journal) {
+    $this->setBreadcrumbs(array(), true);
+    // Retrieve all published issues.
+    AppLocale::requireComponents(array(LOCALE_COMPONENT_OJS_EDITOR));
+    $issueDao =& DAORegistry::getDAO('IssueDAO'); /* @var $issueDao IssueDAO */
+    $this->registerDaoHook('IssueDAO');
+    $issueIterator =& $issueDao->getPublishedIssues($journal->getId(), Handler::getRangeInfo('issues'));
+    // Filter only issues that contain an article that have a DOI assigned.
+    $publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
+    $issues = array();
+    $numArticles = array();
+    while ($issue =& $issueIterator->next()) {
+      $issueArticles =& $publishedArticleDao->getPublishedArticles($issue->getId());
+      $issueArticlesNo = 0;
+      $allArticlesRegistered[$issue->getId()] = true;
+      foreach ($issueArticles as $issueArticle) {
+        $articleRegistered = $issueArticle->getData($this->getPluginId().'::registeredDoi');
+        if (!in_array($issue, $issues)) $issues[] = $issue;
+        $issueArticlesNo++;
+        if ($allArticlesRegistered[$issue->getId()] && !isset($articleRegistered)) {
+          $allArticlesRegistered[$issue->getId()] = false;
+        }
+        // Is the issue itself registered?
+        if (!$issue->getData($this->getPluginId().'::registeredDoi')) {
+          $allArticlesRegistered[$issue->getId()] = false;
+        }
+      }
+      $numArticles[$issue->getId()] = $issueArticlesNo;
+    }
+    // Instantiate issue iterator.
+    import('lib.pkp.classes.core.ArrayItemIterator');
+    $rangeInfo = Handler::getRangeInfo('articles');
+    $iterator = new ArrayItemIterator($issues, $rangeInfo->getPage(), $rangeInfo->getCount());
+    // Prepare and display the issue template.
+    $templateMgr->assign_by_ref('issues', $iterator);
+    $templateMgr->assign('numArticles', $numArticles);
+    $templateMgr->assign('allArticlesRegistered', $allArticlesRegistered);
+    $templateMgr->display($this->getTemplatePath() . 'issues.tpl');
+  }
+
 }
 
 ?>

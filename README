@@ -16,20 +16,20 @@ complete terms of this license.
 
 System Requirements
 -------------------
-Same requirements as the OJS 2.4.5 core.
+Requires OJS 2.4.7.
 
 Location
 ---------
-To see the plugins, login as journal manager of a journal on ejournalsdev.vt.edu.
+To see the plugins, login as journal manager.
 
-EZID DOI plugin is in Journal Management>>System Plugins>>Import/Export Plugins>>EZID EXPORT/REGISTRATION PLUGIN. Enable the plugin, if necessary, and then select "IMPORT/EXPORT DATA."
+EZID DOI plugin is in Journal Management>>System Plugins>>Import/Export Plugins>>EZID EXPORT/REGISTRATION PLUGIN. Configure the plugin SETTINGS, if necessary, and then select "IMPORT/EXPORT DATA."
 
 Alternatively, go through Journal Management>>Import/Export Data>>EZID EXPORT/REGISTRATION PLUGIN. Then you can directly reach the "import/export data" page.
 
 Settings
 ---------------
 For first time user, configure the plugin under "Settings." Two required configurations are setup through Journal's setup page: Journal publisher and Journal online ISSN.
-To export metadata in CrossRef XML format only, username/password/shoulder fields are optional. If registration and DOI assigning with EZID are needed, username/password/shoulder fields need to be filled out. 
+To export metadata in CrossRef XML format only, username/password fields are optional. If registration and DOI assignment with EZID is needed, username/password fields need to be filled out. DOI settings will be drawn from the DOI PubId Plugin, unless the shoulder setting is provided. If the shoulder setting is filled out, new DOIs will be minted based on this shoulder.
 
 Export Data and Register DOIs
 ---------------
