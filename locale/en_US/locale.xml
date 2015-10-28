@@ -23,7 +23,7 @@
   <message key="plugins.importexport.ezid.error.webserviceNoResponse">No response from server.</message>
   <message key="plugins.importexport.ezid.error.webserviceInvalidRequest">An invalid webservice request was generated.</message>
   <message key="plugins.importexport.ezid.settings.depositorIntro">The following items are required for a successful ezid deposit.</message>
-  <message key="plugins.importexport.ezid.doiMismatch">The registered DOI does not match the current article DOI of {$storedDoi}.</message>
+  <message key="plugins.importexport.ezid.doiMismatch">The registered DOI does not match the current article DOI of "{$storedDoi}".</message>
 
   
   <message key="plugins.importexport.ezid.settings.form.automaticRegistration">Register DOIs automatically</message>
