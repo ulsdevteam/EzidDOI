@@ -23,7 +23,7 @@ class EzidExportDom extends CrossRefExportDom {
 	 * EZID only allows one DOI; this will indicate which one will be output in the Crossref XML
 	 * @var string
 	 */
-	var $_allowed_doi;
+	var $_allowed_doi = NULL;
 
 	/**
 	 * Constructor
@@ -82,12 +82,12 @@ class EzidExportDom extends CrossRefExportDom {
 			extract($pubObjects);
 			$issue =& $pubObjects['issue'];
 			if (is_a($object, 'Issue')) {
-				if ($issue->getPubId('doi')) {
+				if ($issue->getPubId('doi') || $this->getPluginSetting('shoulder')) {
 					$this->_appendIssueXML($doc, $journal, $issue, $bodyNode);
 				}
 			} else {
 				$article =& $pubObjects['article'];
-				if ($article->getPubId('doi')) {
+				if ($article->getPubId('doi') || $this->getPluginSetting('shoulder')) {
 					$this->_appendArticleXML($doc, $journal, $issue, $article, $bodyNode);
 				}
 			}
@@ -127,13 +127,49 @@ class EzidExportDom extends CrossRefExportDom {
 	 * @param $galleys array
 	 */
 	function &_generateDOIdataDom(&$doc, $DOI, $url, $galleys = null) {
-		if ($this->_allowed_doi === $DOI) {
+		if ($this->_allowed_doi === $DOI || ($this->_allowed_doi === NULL && $this->getPluginSetting('shoulder'))) {
 			// Not only is this the only allowed doi_data element, it can only occur once.
-			$this->_allowed_doi = NULL;
+			$this->_allowed_doi = '';
 			// Disallow galleys to prevent creation of the collection element
 			return parent::_generateDOIdataDom($doc, $DOI, $url, null);
 		}
 		return XMLCustomWriter::createComment($doc, '');
+	}
+
+	/**
+	 * Generate journal issue tag to accompany every article
+	 * @param $doc XMLNode
+	 * @param $journal Journal
+	 * @param $issue Issue
+	 * @param $section Section
+	 * @param $article Article
+	 * @return XMLNode
+	 * @todo Can a change be pushed upstream to PKP in CrossRefExportDom so this override is not needed?
+	 */
+	function &_generateJournalIssueDom(&$doc, &$journal, &$issue, &$section, &$article) {
+		$journalIssueNode =& XMLCustomWriter::createElement($doc, 'journal_issue');
+
+		if ($issue->getDatePublished()) {
+			$publicationDateNode =& $this->_generatePublisherDateDom($doc, $issue->getDatePublished());
+			XMLCustomWriter::appendChild($journalIssueNode, $publicationDateNode);
+		}
+
+		if ($issue->getVolume()){
+			$journalVolumeNode =& XMLCustomWriter::createElement($doc, 'journal_volume');
+			XMLCustomWriter::appendChild($journalIssueNode, $journalVolumeNode);
+			XMLCustomWriter::createChildWithText($doc, $journalVolumeNode, 'volume', $issue->getVolume());
+		}
+		if ($issue->getNumber()) {
+			XMLCustomWriter::createChildWithText($doc, $journalIssueNode, 'issue', $issue->getNumber());
+		}
+
+		// Contra CrossRefExportDom::_generateJournalIssueDom, we do not need a stored DOI
+		if ($issue->getDatePublished()) {
+			$issueDoiNode =& $this->_generateDOIdataDom($doc, $issue->getPubId('doi'), Request::url($journal->getPath(), 'issue', 'view', $issue->getBestIssueId($journal)));
+			XMLCustomWriter::appendChild($journalIssueNode, $issueDoiNode);
+		}
+
+		return $journalIssueNode;
 	}
 }
 

@@ -179,7 +179,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
         $articles = array();
         // Extract the article IDs
         foreach ($issueArticles as $issueArticle) {
-          if ($issueArticle->getPubId('doi')) {
+          if ($issueArticle->getPubId('doi') || $this->getSetting($journal->getId(), 'shoulder')) {
             array_push($articles, $issueArticle->getId());
           }
         }
@@ -420,6 +420,74 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
     $templateMgr->display($this->getTemplatePath() . 'issues.tpl');
   }
 
+  /**
+   * The selected issue can be exported if it contains an article that has a DOI,
+   * and the articles containing a DOI also have a date published.
+   * The selected article can be exported if it has a DOI and a date published.
+   * @param $foundObject Issue|PublishedArticle
+   * @param $errors array
+   * @return array|boolean
+  */
+  function canBeExported($foundObject, &$errors) {
+    $journal =& Request::getJournal();
+    $optionalDoi = (boolean) $this->getSetting($journal->getId(), 'shoulder');
+    if (is_a($foundObject, 'Issue') || is_a($foundObject, 'PublishedArticle')) {
+      return !is_null($foundObject->getPubId('doi')) || $optionalDoi;
+    }
+    return false;
+  }
+  
+  /**
+   * @copydoc DOIExportPlugin::displayArticleList
+   * @todo Remove this method when https://github.com/pkp/ojs/pull/647 is resolved
+   */
+  function displayArticleList(&$templateMgr, &$journal) {
+    $templateMgr->assign('depositStatusSettingName', $this->getDepositStatusSettingName());
+    $templateMgr->assign('depositStatusUrlSettingName', $this->getDepositStatusUrlSettingName());
+    $this->setBreadcrumbs(array(), true);
+
+    // Retrieve all published articles.
+    $this->registerDaoHook('PublishedArticleDAO');
+    $allArticles = $this->getAllPublishedArticles($journal);
+
+    // Filter only articles that have a DOI assigned.
+    $articles = array();
+    foreach($allArticles as $article) {
+      $errors = array();
+      if ($this->canBeExported($article, $errors)) {
+        $articles[] = $article;
+      }
+      unset($article);
+    }
+    unset($allArticles);
+
+    // Paginate articles.
+    $totalArticles = count($articles);
+    $rangeInfo = Handler::getRangeInfo('articles');
+    if ($rangeInfo->isValid()) {
+      $articles = array_slice($articles, $rangeInfo->getCount() * ($rangeInfo->getPage()-1), $rangeInfo->getCount());
+    }
+
+    // Retrieve article data.
+    $articleData = array();
+    foreach($articles as $article) {
+      $preparedArticle = $this->_prepareArticleData($article, $journal);
+      // We should always get a prepared article as we've already
+      // filtered non-published articles above.
+      assert(is_array($preparedArticle));
+      $articleData[] = $preparedArticle;
+      unset($article, $preparedArticle);
+    }
+    unset($articles);
+
+    // Instantiate article iterator.
+    import('lib.pkp.classes.core.VirtualArrayIterator');
+    $iterator = new VirtualArrayIterator($articleData, $totalArticles, $rangeInfo->getPage(), $rangeInfo->getCount());
+
+    // Prepare and display the article template.
+    $templateMgr->assign_by_ref('articles', $iterator);
+    $templateMgr->display($this->getTemplatePath() . 'articles.tpl');
+  }
 }
 
 ?>
