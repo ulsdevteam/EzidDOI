@@ -236,6 +236,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
 
       $input = "_profile: crossref" . PHP_EOL;
       $input .= "crossref: " . $this->_doiMetadataEscape($payload) . PHP_EOL;
+      $input .= "_crossref: yes" . PHP_EOL;
 
       // TODO: SHOW BOTH DATACITE METADATA AS WELL
       //5 required datacite fields:
