@@ -227,6 +227,9 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
     $shoulder = $this->getSetting($journal->getId(), 'shoulder');
     // Transmit CrossRef XML metadata.
     assert(is_readable($filename));
+    $xml = simplexml_load_file($filename);
+    assert($xml !== false && !empty($xml));
+    $targetUrl = $xml->body->journal->journal_article->doi_data->resource->__toString();
     $payload = file_get_contents($filename);
     assert($payload !== false && !empty($payload));
     // we only consider articles and issues here
@@ -235,8 +238,10 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
     if (is_a($object, 'PublishedArticle') || is_a($object, 'Issue') ) {
 
       $input = "_profile: crossref" . PHP_EOL;
-      $input .= "crossref: " . $this->_doiMetadataEscape($payload) . PHP_EOL;
       $input .= "_crossref: yes" . PHP_EOL;
+      $input .= "_target: " . $targetUrl . PHP_EOL;
+      $input .= "crossref: " . $this->_doiMetadataEscape($payload) . PHP_EOL;
+
 
       // TODO: SHOW BOTH DATACITE METADATA AS WELL
       //5 required datacite fields:
@@ -437,7 +442,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
     }
     return false;
   }
-  
+
   /**
    * @copydoc DOIExportPlugin::displayArticleList
    * @todo Remove this method when https://github.com/pkp/ojs/pull/647 is resolved
