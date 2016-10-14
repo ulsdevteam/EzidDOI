@@ -253,7 +253,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       }
       $input .= PHP_EOL;
       $input .= "datacite.title: " . $object->getLocalizedTitle() . PHP_EOL;
-      $input .= "datacite.publisher: " . $journal->getSetting('publisherInstitution') . PHP_EOL;
+      $input .= "datacite.publisher: " . $journal->getLocalizedTitle() . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
       $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;
       if ($object->getData('ezid::registeredDoi')) {
