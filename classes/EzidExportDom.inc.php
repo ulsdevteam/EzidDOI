@@ -130,8 +130,7 @@ class EzidExportDom extends CrossRefExportDom {
 		if ($this->_allowed_doi === $DOI || ($this->_allowed_doi === NULL && $this->getPluginSetting('shoulder'))) {
 			// Not only is this the only allowed doi_data element, it can only occur once.
 			$this->_allowed_doi = '';
-			// Disallow galleys to prevent creation of the collection element
-			return parent::_generateDOIdataDom($doc, $DOI, $url, null);
+			return parent::_generateDOIdataDom(&$doc, $DOI, $url, $galleys);
 		}
 		return XMLCustomWriter::createComment($doc, '');
 	}
@@ -163,11 +162,8 @@ class EzidExportDom extends CrossRefExportDom {
 			XMLCustomWriter::createChildWithText($doc, $journalIssueNode, 'issue', $issue->getNumber());
 		}
 
-		// Contra CrossRefExportDom::_generateJournalIssueDom, we do not need a stored DOI
-		if ($issue->getDatePublished()) {
-			$issueDoiNode =& $this->_generateDOIdataDom($doc, $issue->getPubId('doi'), Request::url($journal->getPath(), 'issue', 'view', $issue->getBestIssueId($journal)));
-			XMLCustomWriter::appendChild($journalIssueNode, $issueDoiNode);
-		}
+		// Contra CrossRefExportDom::_generateJournalIssueDom, disallow a DOI here
+		// TODO: this would be better as: `$issue = parent::_generateJournalIssueDom; return $this->deleteDOINode($issue);`
 
 		return $journalIssueNode;
 	}
