@@ -256,8 +256,21 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       $input .= "datacite.publisher: " . $journal->getSetting('publisherInstitution') . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
       $input .= "datacite.resourcetype: " . $object->getLocalizedData('type'). PHP_EOL;
-      if ($object->getData('ezid::registeredDoi')) {
-        $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getData('ezid::registeredDoi'), $input, 'POST');
+
+      $existingId = $object->getData('ezid::registeredDoi');
+      // Even if no id is known to be already registered, check an existing pub-id for an existing registration
+      if (!$existingId && !$shoulder && $object->getPubId('doi')) {
+        $checkRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getPubId('doi'), array());
+        $webService = new WebService();
+        $checkResponse =& $webService->call($checkRequest);
+        if ($checkResponse && $webService->getLastResponseStatus() === EZID_API_RESPONSE_OK) {
+          // We discovered an existing registration for this object!
+          $existingId = $object->getPubId('doi');
+        }
+      }
+
+      if ($existingId) {
+        $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $existingId, $input, 'POST');
         $expectedResponse = EZID_API_RESPONSE_OK;
       } else {
         if ($shoulder){
@@ -288,7 +301,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       } else {
         $status = $webService->getLastResponseStatus();
         if ($status != $expectedResponse) {
-          $result = array(array('plugins.importexport.common.register.error.mdsError', "$status - ".htmlentities($response)));
+          $result = array(array('plugins.importexport.common.register.error.mdsError', htmlentities($webServiceRequest->getMethod().' '.$webServiceRequest->getUrl())." - $status - ".htmlentities($response)));
         }
       }
     } else {
