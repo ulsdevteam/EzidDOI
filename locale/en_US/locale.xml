@@ -54,4 +54,5 @@
 
   <message key="plugins.importexport.ezid.update">Edit</message>
   <message key="plugins.importexport.ezid.updateDescription">Click this button to update the meta-data of this object with EZID. This only works if you successfully registered the object before!</message>
+  <message key="plugins.importexport.ezid.senderTask.name">EZID Automatic Registration Task</message>
 </locale>
