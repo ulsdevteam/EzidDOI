@@ -36,11 +36,11 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
   }
 
   /**
-   * Skip the Crossref register() method
+   * This will register the plugin (specifically, setup the crontab callback for acron)
    * @see PKPPlugin::register()
    */
   function register($category, $path) {
-    $success = DOIExportPlugin::register($category, $path);
+    $success = parent::register($category, $path);
     return $success;
   }
   //
@@ -448,9 +448,10 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
    * @return array|boolean
   */
   function canBeExported($foundObject, &$errors) {
-    $journal =& Request::getJournal();
-    $optionalDoi = (boolean) $this->getSetting($journal->getId(), 'shoulder');
     if (is_a($foundObject, 'Issue') || is_a($foundObject, 'PublishedArticle')) {
+      // Issues and PublishedArticles should have a getJournalId() method
+      $journalId = $foundObject->getJournalId();
+      $optionalDoi = (boolean) ($journalId && $this->getSetting($journalId, 'shoulder'));
       return !is_null($foundObject->getPubId('doi')) || $optionalDoi;
     }
     return false;
