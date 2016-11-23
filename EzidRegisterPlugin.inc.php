@@ -150,7 +150,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       // Retrieve the object(s).
       $objects =& $this->_getObjectsFromIds($exportType, $objectIds, $journal->getId(), $errors);
       if (empty($objects)) {
-        return errors;
+        return $errors;
       }
       $result = $this->processRegisterObjects($request, $exportType, $objects, $exportPath, $journal, $errors);
       if ($result !== true) {
