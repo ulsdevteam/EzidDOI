@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  * plugins/importexport/EzidDOI/scheduledTasks.xml
+  *
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * EZID Plugin Deposit
+  *
+  * This file describes the schedule task that will send deposits to EZID in the background.
+  *
+  -->
+
+<!DOCTYPE scheduled_tasks SYSTEM "../../../lib/pkp/dtd/scheduledTasks.dtd">
+
+<scheduled_tasks>
+	<task class="plugins.importexport.EzidDOI.EzidInfoSender">
+		<descr>Send DOI deposit to EZID server.</descr>
+		<frequency minute="0"/>
+	</task>
+</scheduled_tasks>

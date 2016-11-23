@@ -45,9 +45,9 @@ class EzidInfoSender extends ScheduledTask {
   }
 
   /**
-   * @see FileLoader::execute()
+   * @see ScheduledTask::executeActions()
    */
-  function execute() {
+  function executeActions() {
     if (!$this->_plugin) return false;
 
     $plugin = $this->_plugin;
@@ -74,13 +74,27 @@ class EzidInfoSender extends ScheduledTask {
       }
 
       // If there are unregistered things and we want automatic deposits
+      $errorsOccurred = false;
       if (count($toBeRegisteredIds) && $plugin->getSetting($journal->getId(), 'automaticRegistration')) {
-        $exportSpec = array(DOI_EXPORT_ARTICLES => $toBeRegisteredIds);
-
-        $plugin->registerObjects($request, $exportSpec, $journal);
+        foreach ($toBeRegisteredIds as $articleId) {
+          $exportSpec = array(DOI_EXPORT_ARTICLES => array($articleId));
+          $result = $plugin->registerObjects($request, $exportSpec, $journal);
+          if ($result !== true) {
+            if (is_array($result)) {
+              foreach($result as $error) {
+                assert(is_array($error) && count($error) >= 1);
+                $this->addExecutionLogEntry(
+                  __($error[0], array('param' => (isset($error[1]) ? $error[1] : null))),
+                  SCHEDULED_TASK_MESSAGE_TYPE_WARNING
+                );
+              }
+            }
+          $errorsOccurred = true;
+          }
+        }
       }
     }
-
+    return !$errorsOccurred;
   }
 
   /**
