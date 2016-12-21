@@ -55,13 +55,15 @@ class EzidInfoSender extends ScheduledTask {
     $journals = $this->_getJournals();
     $request =& Application::getRequest();
 
+    $errorsOccurred = false;
     foreach ($journals as $journal) {
       $unregisteredArticles = $plugin->_getUnregisteredArticles($journal);
 
       $unregisteredArticlesIds = array();
       foreach ($unregisteredArticles as $articleData) {
         $article = $articleData['article'];
-        if (is_a($article, 'PublishedArticle')) {
+        $errors = array();
+        if (is_a($article, 'PublishedArticle') && $plugin->canBeExported($article, $errors)) {
           $unregisteredArticlesIds[$article->getId()] = $article;
         }
       }
@@ -74,7 +76,6 @@ class EzidInfoSender extends ScheduledTask {
       }
 
       // If there are unregistered things and we want automatic deposits
-      $errorsOccurred = false;
       if (count($toBeRegisteredIds) && $plugin->getSetting($journal->getId(), 'automaticRegistration')) {
         foreach ($toBeRegisteredIds as $articleId) {
           $exportSpec = array(DOI_EXPORT_ARTICLES => array($articleId));
@@ -89,7 +90,7 @@ class EzidInfoSender extends ScheduledTask {
                 );
               }
             }
-          $errorsOccurred = true;
+            $errorsOccurred = true;
           }
         }
       }
