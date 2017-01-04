@@ -248,12 +248,12 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       $input .= "datacite.creator: ";
       if (is_a($object, 'PublishedArticle')) {
         foreach ($object->getAuthors() as $author) {
-          $input .= $author->getLastName() . ", " . $author->getFirstName() . " " . $author->getMiddleName() . "; ";
+          $input .= $this->_doiMetadataEscape($author->getLastName() . ", " . $author->getFirstName() . " " . $author->getMiddleName() . "; ");
         }
       }
       $input .= PHP_EOL;
-      $input .= "datacite.title: " . $object->getLocalizedTitle() . PHP_EOL;
-      $input .= "datacite.publisher: " . $journal->getSetting('publisherInstitution') . PHP_EOL;
+      $input .= "datacite.title: " . $this->_doiMetadataEscape($object->getLocalizedTitle()) . PHP_EOL;
+      $input .= "datacite.publisher: " . $this->_doiMetadataEscape($journal->getLocalizedTitle()) . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
 
       if ($object->getData('ezid::registeredDoi')) {
