@@ -244,7 +244,7 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
 
 
       // TODO: SHOW BOTH DATACITE METADATA AS WELL
-      //5 required datacite fields:
+      // Set required datacite fields:
       $input .= "datacite.creator: ";
       if (is_a($object, 'PublishedArticle')) {
         foreach ($object->getAuthors() as $author) {
@@ -255,7 +255,6 @@ class EzidRegisterPlugin extends CrossRefExportPlugin {
       $input .= "datacite.title: " . $this->_doiMetadataEscape($object->getLocalizedTitle()) . PHP_EOL;
       $input .= "datacite.publisher: " . $this->_doiMetadataEscape($journal->getLocalizedTitle()) . PHP_EOL;
       $input .= "datacite.publicationyear: " . date('Y', strtotime($object->getDatePublished())) . PHP_EOL;
-      $input .= "datacite.resourcetype: " . $this->_doiMetadataEscape($object->getLocalizedData('type')). PHP_EOL;
 
       if ($object->getData('ezid::registeredDoi')) {
         $webServiceRequest = new WebServiceRequest(EZID_API_CRUD_URL . $object->getData('ezid::registeredDoi'), $input, 'POST');
