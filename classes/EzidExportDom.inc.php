@@ -130,7 +130,7 @@ class EzidExportDom extends CrossRefExportDom {
 		if ($this->_allowed_doi === $DOI || ($this->_allowed_doi === NULL && $this->getPluginSetting('shoulder'))) {
 			// Not only is this the only allowed doi_data element, it can only occur once.
 			$this->_allowed_doi = '';
-			return parent::_generateDOIdataDom(&$doc, $DOI, $url, $galleys);
+			return parent::_generateDOIdataDom($doc, $DOI, $url, $galleys);
 		}
 		return XMLCustomWriter::createComment($doc, '');
 	}
